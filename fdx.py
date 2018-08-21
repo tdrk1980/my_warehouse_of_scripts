@@ -17,7 +17,10 @@ class DatagramHeader(LittleEndianStructure):
     ]
 
     def __new__(self, buf=None):
-        return self.from_buffer_copy(buf)
+        if buf:
+            return self.from_buffer_copy(buf)
+        else:
+            return super().__new__(self)
 
     def __init__(self, buf=None):
         if buf == None:
@@ -37,6 +40,15 @@ class CommandHeader(LittleEndianStructure):
         ("commandSize", c_uint16),
         ("commandCode", c_uint16),
     ]
+
+    def __new__(self, buf=None):
+        if buf:
+            return self.from_buffer_copy(buf)
+        else:
+            return super().__new__(self)
+
+    def __init__(self, buf=None):
+        pass
 
     def tobytes(self):
         return bytes(self)
@@ -58,21 +70,50 @@ class CommandCode:
     Custom              = 0x8000
     RT2RT_COM           = 0x8001
 
+class StartCommand(CommandHeader):
+     def __init__(self, buf=None):
+        if buf == None:
+            self.commandSize = 4
+            self.commandCode = CommandCode.Start
+
+class StopCommand(CommandHeader):
+     def __init__(self, buf=None):
+        if buf == None:
+            self.commandSize = 4
+            self.commandCode = CommandCode.Stop
+
+class KeyCommand(CommandHeader):
+    _fields_ = [
+        ("canoeKeyCode", c_uint32),
+    ]
+
+     def __init__(self, buf=None):
+        if buf == None:
+            self.commandSize = 8
+            self.commandCode = CommandCode.Key
+            self.canoeKeyCode = 0    
+
 
 a = DatagramHeader()
-
-
 print(f"{a.tobytes()}")
+
+a2 = DatagramHeader(b'MYOWNDAT\x02\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b')
+print(f"{a2.tobytes()}")
 
 b = CommandHeader()
 b.commandCode = CommandCode.RT2RT_COM
-
 print(f"{b.tobytes()}")
+
+b2 = CommandHeader(b'\xde\xad\xbe\xef')
+print(f"{b2.tobytes()}")
+print(f"{b2.commandCode:04x}")
 
 print(f"{a.tobytes() + b.tobytes()}")
 
+print(f"{StartCommand().tobytes()}")
 
-  
+print(f"{StopCommand().tobytes()}")
+
 # さくっとbytearrayにいれてしまう。
 # ↓ではmemoryview(a).tobytes()を使っている。
 # https://qiita.com/pashango2/items/5075cb2d9248c7d3b5d4#memoryview%E3%81%A7bytes%E3%81%AB%E5%A4%89%E6%8F%9B
