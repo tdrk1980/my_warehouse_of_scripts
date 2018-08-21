@@ -1,7 +1,8 @@
 # *-* encoding: utf-8 *-*
 from ctypes import Structure, LittleEndianStructure, BigEndianStructure, c_int8, c_uint8, c_int16, c_uint16, c_int32, c_uint32, c_int64, c_uint64, c_float, c_double
 
-
+# CANoe_FDX_Protocol_EN.pdf
+# Manual CANoe FDX Protocol Version 2.0 English 
 # 2.2.1  Datagram Header
 
 class DatagramHeader(LittleEndianStructure):
