@@ -5,6 +5,25 @@ from ctypes import Structure, LittleEndianStructure, BigEndianStructure, c_int8,
 # Manual CANoe FDX Protocol Version 2.0 English 
 # 2.2.1  Datagram Header
 
+# 43414e6f65464458020002000000000006000600010010000500020008000000000000000000
+#   ↓
+# 43414e6f65464458 0200 0200 00000000 0600060001001000 0500020008000000000000000000
+s = "43414e6f65464458020002000000000006000600010010000500020008000000000000000000"
+# 43414e6f65464458
+# 02
+# 00
+# 0200
+# 0000
+# 00
+# 00
+
+# 0600
+# 0600
+# 0100
+# 1000
+
+# 0500020008000000000000000000
+
 class DatagramHeader(LittleEndianStructure):
     _fields_ = [
         ("fdxSignature",     c_uint8 * 8),
@@ -70,49 +89,74 @@ class CommandCode:
     Custom              = 0x8000
     RT2RT_COM           = 0x8001
 
-class StartCommand(CommandHeader):
+class Start(CommandHeader):
      def __init__(self, buf=None):
         if buf == None:
             self.commandSize = 4
             self.commandCode = CommandCode.Start
 
-class StopCommand(CommandHeader):
+class Stop(CommandHeader):
      def __init__(self, buf=None):
         if buf == None:
             self.commandSize = 4
             self.commandCode = CommandCode.Stop
 
-class KeyCommand(CommandHeader):
+class Key(CommandHeader):
     _fields_ = [
         ("canoeKeyCode", c_uint32),
     ]
 
-     def __init__(self, buf=None):
+    def __init__(self, buf=None):
         if buf == None:
             self.commandSize = 8
             self.commandCode = CommandCode.Key
-            self.canoeKeyCode = 0    
+            self.canoeKeyCode = 0
 
+class DataRequest(CommandHeader):
+    _fields_ = [
+        ("groupID", c_uint16),
+    ]
 
-a = DatagramHeader()
-print(f"{a.tobytes()}")
+    def __init__(self, buf=None):
+        if buf == None:
+            self.commandSize = 6
+            self.commandCode = CommandCode.DataRequest
+            self.groupID = 0
 
-a2 = DatagramHeader(b'MYOWNDAT\x02\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b')
-print(f"{a2.tobytes()}")
+class DataExchange(CommandHeader):
+    _fields_ = [
+        ("groupID", c_uint16),
+        ("dataSize", c_uint16),
+        ("dataBytes", c_uint8),
+    ]
 
-b = CommandHeader()
-b.commandCode = CommandCode.RT2RT_COM
-print(f"{b.tobytes()}")
+    def __init__(self, buf=None):
+        if buf == None:
+            self.commandSize = 4
+            self.commandCode = CommandCode.DataRequest
+            self.groupID = 0
 
-b2 = CommandHeader(b'\xde\xad\xbe\xef')
-print(f"{b2.tobytes()}")
-print(f"{b2.commandCode:04x}")
+if __name__ == "__main__":
+    a = DatagramHeader()
+    print(f"{a.tobytes()}")
 
-print(f"{a.tobytes() + b.tobytes()}")
+    a2 = DatagramHeader(b'MYOWNDAT\x02\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b')
+    print(f"{a2.tobytes()}")
 
-print(f"{StartCommand().tobytes()}")
+    b = CommandHeader()
+    b.commandCode = CommandCode.RT2RT_COM
+    print(f"{b.tobytes()}")
 
-print(f"{StopCommand().tobytes()}")
+    b2 = CommandHeader(b'\xde\xad\xbe\xef')
+    print(f"{b2.tobytes()}")
+    print(f"{b2.commandCode:04x}")
+
+    print(f"{a.tobytes() + b.tobytes()}")
+
+    print(f"Start       : {Start().tobytes()}")
+    print(f"Stop        : {Stop().tobytes()}")
+    print(f"Key         : {Key().tobytes()}")
+    print(f"DataRequest : {DataRequest().tobytes()}")
 
 # さくっとbytearrayにいれてしまう。
 # ↓ではmemoryview(a).tobytes()を使っている。
